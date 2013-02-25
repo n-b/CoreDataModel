@@ -255,3 +255,16 @@ static char kCoreDataModel_associatedManagerKey;
     return objc_getAssociatedObject(self, &kCoreDataModel_associatedManagerKey);
 }
 @end
+
+
+/****************************************************************************/
+#pragma mark -
+
+// Return the "same" object (same identifier) in another context.
+@implementation NSManagedObject (ObjectInContext)
+- (instancetype) objectInContext:(NSManagedObjectContext*)otherContext
+{
+    return [otherContext existingObjectWithID:self.objectID error:nil];
+}
+@end
+

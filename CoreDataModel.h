@@ -49,3 +49,8 @@
 @interface NSManagedObjectContext (AssociatedManager)
 @property (nonatomic, retain, readonly) CoreDataModel * coreDataModel;
 @end
+
+// Return the "same" object (same identifier) in another context.
+@interface NSManagedObject (ObjectInContext)
+- (instancetype) objectInContext:(NSManagedObjectContext*)otherContext;
+@end
