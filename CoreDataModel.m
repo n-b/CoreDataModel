@@ -173,8 +173,11 @@ static NSString * _defaultStoreDirectory = nil;
 
 - (void) copyBundledStoreIfAvailable
 {
-    if(self.embeddedStorePath)
-        [[NSFileManager defaultManager] copyItemAtPath:self.embeddedStorePath toPath:self.storePath error:NULL];
+    if(self.embeddedStorePath) {
+        NSError * error;
+        [[NSFileManager defaultManager] removeItemAtPath:self.storePath error:&error];
+        [[NSFileManager defaultManager] copyItemAtPath:self.embeddedStorePath toPath:self.storePath error:&error];
+    }
 }
 
 /******************************************************************************/
