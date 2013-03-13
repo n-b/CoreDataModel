@@ -22,12 +22,26 @@
 + (NSString *) defaultStoreDirectory; // used in -init. initial value is the Documents directory.
 + (void) setDefaultStoreDirectory:(NSString*)defaultStoreDirectory_;
 
+// Actual store location
+@property (readonly) NSString* storePath;
+
+// "embedded" store, if any, from within the app bundle
+// It must have the same name as the storepath, and
+@property (readonly) NSString* embeddedStorePath;
+
 // Returns wether the store is loaded.
 //
 // Store is lazy loaded the first time it's used (when mainContext or performUpdates:saveCompletion: is called.)
 - (BOOL) isStoreLoaded;
 
-- (void) storeDidLoad;// reimplement to perform specific tasks after loading the store.
+// default implementation returns YES if there's no existing store at the storePath.
+// (Returning NO would result in the creation of an empty store.)
+- (BOOL) shouldCopyEmbeddedStore;
+
+// sent after the store is done loading.
+// reimplement to perform specific initialization.
+// default implementation does nothing.
+- (void) storeDidLoad;
 
 // The main context, to be used on the main thread.
 - (NSManagedObjectContext *) mainContext;

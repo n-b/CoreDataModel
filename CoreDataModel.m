@@ -19,6 +19,7 @@
 
 @interface NSManagedObjectContext (AssociatedManager_Private)
 @property (nonatomic, retain, readwrite) CoreDataModel * coreDataModel;
+@property (readwrite) NSString * storePath;
 @end
 
 /****************************************************************************/
@@ -27,7 +28,6 @@
 @implementation CoreDataModel
 {
     NSString * _modelName;
-    NSString * _storePath;
     NSManagedObjectModel * _mom;
     NSPersistentStoreCoordinator * _psc;
     NSManagedObjectContext *_mainContext;
@@ -95,29 +95,29 @@ static NSString * _defaultStoreDirectory = nil;
 		_psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:_mom];
 		NSError *error = nil;
         
-        if(_storePath)
+        if(self.storePath)
         {
-            NSURL *storeURL = [NSURL fileURLWithPath:_storePath];
             // Copy embedded store if we don't already have a store in the final location.
-            if( ![[NSFileManager defaultManager] fileExistsAtPath:[storeURL path]])
-                [self copyBundledStoreIfAvailableToURL:storeURL];
+            if( [self shouldCopyEmbeddedStore] )
+                [self copyBundledStoreIfAvailable];
             
             // Add Persistent Store
-            if (![_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL
+            if (![_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
                                           options:nil error:&error])
             {
                 if( error.code == NSPersistentStoreIncompatibleVersionHashError )
                 {
                     // This happens a lot during development. Just dump the old store and create a new one.
                     NSLog(@"Incompatible data store. Trying to remove the existing db");
-                    [[NSFileManager defaultManager] removeItemAtURL:storeURL error:NULL];
+                    [[NSFileManager defaultManager] removeItemAtPath:self.storePath error:NULL];
                     error = nil;
                     
                     // Copy embedded store instead of the incompatible one.
-                    [self copyBundledStoreIfAvailableToURL:storeURL];
+                    [self copyBundledStoreIfAvailable];
                     
                     // Retry
-                    [_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error];
+                    [_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
+                                             options:nil error:&error];
                 }
                 
                 if (error)
@@ -160,12 +160,21 @@ static NSString * _defaultStoreDirectory = nil;
     return _mainContext;
 }
 
-- (void) copyBundledStoreIfAvailableToURL:(NSURL*)storeURL
+- (NSString*) embeddedStorePath
 {
-    NSString * storeName = [storeURL.path lastPathComponent];
-    NSURL * embeddedStoreURL = [[NSBundle mainBundle] URLForResource:[storeName stringByDeletingPathExtension] withExtension:[storeName pathExtension]];
-    if(embeddedStoreURL)
-        [[NSFileManager defaultManager] copyItemAtURL:embeddedStoreURL toURL:storeURL error:NULL];
+    NSString * storeName = [self.storePath lastPathComponent];
+    return [[NSBundle mainBundle] pathForResource:[storeName stringByDeletingPathExtension] ofType:[storeName pathExtension]];
+}
+
+- (BOOL) shouldCopyEmbeddedStore
+{
+    return ![[NSFileManager defaultManager] fileExistsAtPath:self.storePath];
+}
+
+- (void) copyBundledStoreIfAvailable
+{
+    if(self.embeddedStorePath)
+        [[NSFileManager defaultManager] copyItemAtPath:self.embeddedStorePath toPath:self.storePath error:NULL];
 }
 
 /******************************************************************************/
