@@ -198,6 +198,34 @@ static NSString * _defaultStoreDirectory = nil;
 /******************************************************************************/
 #pragma mark -
 
+- (NSManagedObjectContext *) newTemporaryContext
+{
+    NSManagedObjectContext * context = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSConfinementConcurrencyType];
+    context.persistentStoreCoordinator = _psc;
+    context.coreDataModel = self;
+    return context;
+}
+
+- (NSManagedObjectContext *) currentContext
+{
+    if([[NSThread currentThread] isEqual:[NSThread mainThread]]) {
+        return self.mainContext;
+    } else {
+        if(![self isStoreLoaded]) {
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                [self loadStoreIfNeeded];
+            });
+        }
+            
+        NSManagedObjectContext * context = [[NSThread currentThread] threadDictionary][@"CoreDataModelContext"];
+        if(context==nil) {
+            context = [self newTemporaryContext];
+            [[NSThread currentThread] threadDictionary][@"CoreDataModelContext"] = context;
+        }
+        return context;
+    }
+}
+
 - (void) performUpdates:(void(^)(NSManagedObjectContext* updateContext))updates
          saveCompletion:(void(^)(NSNotification* contextDidSaveNotification))completion
 {
@@ -207,9 +235,7 @@ static NSString * _defaultStoreDirectory = nil;
     __block NSOperation * updateOperation = [NSBlockOperation blockOperationWithBlock:^
      {
          // Create the context
-         NSManagedObjectContext * updateContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSConfinementConcurrencyType];
-         updateContext.persistentStoreCoordinator = _psc;
-         updateContext.coreDataModel = self;
+         NSManagedObjectContext * updateContext = [self newTemporaryContext];
 
          // Observe save notification to forward to the completion block in the main queue.
          __block id observation =

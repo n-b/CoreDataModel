@@ -46,6 +46,10 @@
 // The main context, to be used on the main thread.
 - (NSManagedObjectContext *) mainContext;
 
+- (NSManagedObjectContext *) newTemporaryContext;
+
+- (NSManagedObjectContext *) currentContext; // mainContext if main thread, stored in Thread's infoDictionary otherwise
+
 // Perform a batch of updates in the internal context, save it, merge the changes in the UI context, and notify when done.
 // Uses the "ValidateDeleteAndSave" mechanism to save. If an object is invalid, it's deleted and saving is retried.
 //
