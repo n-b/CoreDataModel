@@ -216,11 +216,12 @@ static NSString * _defaultStoreDirectory = nil;
                 [self loadStoreIfNeeded];
             });
         }
-            
-        NSManagedObjectContext * context = [[NSThread currentThread] threadDictionary][@"CoreDataModelContext"];
+        
+        NSString * tlsKey = self.storePath;
+        NSManagedObjectContext * context = [[NSThread currentThread] threadDictionary][tlsKey];
         if(context==nil) {
             context = [self newTemporaryContext];
-            [[NSThread currentThread] threadDictionary][@"CoreDataModelContext"] = context;
+            [[NSThread currentThread] threadDictionary][tlsKey] = context;
         }
         return context;
     }
