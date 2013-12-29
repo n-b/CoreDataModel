@@ -103,7 +103,7 @@ static NSString * _defaultStoreDirectory = nil;
             
             // Add Persistent Store
             if (![_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
-                                          options:nil error:&error])
+                                          options:[self storeOptions] error:&error])
             {
                 if( error.code == NSPersistentStoreIncompatibleVersionHashError )
                 {
@@ -117,7 +117,7 @@ static NSString * _defaultStoreDirectory = nil;
                     
                     // Retry
                     [_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
-                                             options:nil error:&error];
+                                             options:[self storeOptions] error:&error];
                 }
                 
                 if (error)
@@ -152,6 +152,11 @@ static NSString * _defaultStoreDirectory = nil;
         
         [self storeDidLoad];
     }
+}
+
+- (NSDictionary*) storeOptions
+{
+    return nil;
 }
 
 - (NSManagedObjectContext *) mainContext

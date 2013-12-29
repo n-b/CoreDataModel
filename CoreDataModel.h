@@ -38,6 +38,9 @@
 // (Returning NO would result in the creation of an empty store.)
 - (BOOL) shouldCopyEmbeddedStore;
 
+// Store loading options
+- (NSDictionary*) storeOptions;
+
 // sent after the store is done loading.
 // reimplement to perform specific initialization.
 // default implementation does nothing.
