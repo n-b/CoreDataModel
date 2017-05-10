@@ -19,27 +19,16 @@
 - (id) initWithModelName:(NSString*)modelName_ storePath:(NSString*)storePath_;
 - (id) init; // Uses the class name as the modelName and the filename, created in +defaultStoreDirectory.
 
-+ (NSString *) defaultStoreDirectory; // used in -init. initial value is the Documents directory.
-+ (void) setDefaultStoreDirectory:(NSString*)defaultStoreDirectory_;
-
 // Actual store location
 @property (readonly) NSString* storePath;
 
-// "embedded" store, if any, from within the app bundle
-// It must have the same name as the storepath, and
-@property (readonly) NSString* embeddedStorePath;
+// debug
+@property (class, nonatomic) BOOL forceInMemoryStores;
 
 // Returns wether the store is loaded.
 //
 // Store is lazy loaded the first time it's used (when mainContext or performUpdates:saveCompletion: is called.)
 - (BOOL) isStoreLoaded;
-
-// default implementation returns YES if there's no existing store at the storePath.
-// (Returning NO would result in the creation of an empty store.)
-- (BOOL) shouldCopyEmbeddedStore;
-
-// Store loading options
-- (NSDictionary*) storeOptions;
 
 // sent after the store is done loading.
 // reimplement to perform specific initialization.

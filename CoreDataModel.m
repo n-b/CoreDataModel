@@ -37,26 +37,11 @@
 /****************************************************************************/
 #pragma mark Init
 
-static NSString * _defaultStoreDirectory = nil;
-
-+ (NSString *) defaultStoreDirectory
-{
-    if(_defaultStoreDirectory)
-        return _defaultStoreDirectory;
-    else
-        return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-}
-
-+ (void) setDefaultStoreDirectory:(NSString*)defaultStoreDirectory_
-{
-    _defaultStoreDirectory = defaultStoreDirectory_;
-}
-
 - (id)init
 {
     NSString * className = NSStringFromClass([self class]);
-    NSString * storePath = [[[self class] defaultStoreDirectory] stringByAppendingPathComponent:
-                            [className stringByAppendingPathExtension:@"coredata"]];
+    NSString * directory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+    NSString * storePath = [directory stringByAppendingPathComponent:[className stringByAppendingPathExtension:@"coredata"]];
     return [self initWithModelName:className storePath:storePath];
 }
 
@@ -65,12 +50,25 @@ static NSString * _defaultStoreDirectory = nil;
     self = [super init];
     if (self) {
         _storePath = storePath_;
+        _modelName = modelName_;
     }
     return self;
 }
 
 /****************************************************************************/
 #pragma mark Loading
+
+static BOOL DebugForceInMemoryStores;
+
++ (BOOL)forceInMemoryStores
+{
+    return DebugForceInMemoryStores;
+}
+
++(void)setForceInMemoryStores:(BOOL)value_
+{
+    DebugForceInMemoryStores = value_;
+}
 
 - (BOOL) isStoreLoaded
 {
@@ -95,15 +93,11 @@ static NSString * _defaultStoreDirectory = nil;
 		_psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:_mom];
 		NSError *error = nil;
         
-        if(self.storePath)
+        if(self.storePath && !self.class.forceInMemoryStores)
         {
-            // Copy embedded store if we don't already have a store in the final location.
-            if( [self shouldCopyEmbeddedStore] )
-                [self copyBundledStoreIfAvailable];
-            
             // Add Persistent Store
             if (![_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
-                                          options:[self storeOptions] error:&error])
+                                          options:nil error:&error])
             {
                 if( error.code == NSPersistentStoreIncompatibleVersionHashError )
                 {
@@ -111,13 +105,10 @@ static NSString * _defaultStoreDirectory = nil;
                     NSLog(@"Incompatible data store. Trying to remove the existing db");
                     [[NSFileManager defaultManager] removeItemAtPath:self.storePath error:NULL];
                     error = nil;
-                    
-                    // Copy embedded store instead of the incompatible one.
-                    [self copyBundledStoreIfAvailable];
-                    
+                                        
                     // Retry
                     [_psc addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:[NSURL fileURLWithPath:self.storePath]
-                                             options:[self storeOptions] error:&error];
+                                             options:nil error:&error];
                 }
                 
                 if (error)
@@ -154,35 +145,10 @@ static NSString * _defaultStoreDirectory = nil;
     }
 }
 
-- (NSDictionary*) storeOptions
-{
-    return nil;
-}
-
 - (NSManagedObjectContext *) mainContext
 {
     [self loadStoreIfNeeded];
     return _mainContext;
-}
-
-- (NSString*) embeddedStorePath
-{
-    NSString * storeName = [self.storePath lastPathComponent];
-    return [[NSBundle mainBundle] pathForResource:[storeName stringByDeletingPathExtension] ofType:[storeName pathExtension]];
-}
-
-- (BOOL) shouldCopyEmbeddedStore
-{
-    return ![[NSFileManager defaultManager] fileExistsAtPath:self.storePath];
-}
-
-- (void) copyBundledStoreIfAvailable
-{
-    if(self.embeddedStorePath) {
-        NSError * error;
-        [[NSFileManager defaultManager] removeItemAtPath:self.storePath error:&error];
-        [[NSFileManager defaultManager] copyItemAtPath:self.embeddedStorePath toPath:self.storePath error:&error];
-    }
 }
 
 /******************************************************************************/
