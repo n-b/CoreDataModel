@@ -10,7 +10,7 @@
 
 @implementation NSError (MultipleErrorsCombined)
 
-+ (NSError *) errorFromOriginalError:(NSError *)originalError error:(NSError *)secondError
++ (NSError *)errorFromOriginalError:(NSError *)originalError error:(NSError *)secondError
 {
     if(originalError==nil)
         return secondError;
@@ -26,7 +26,7 @@
                         userInfo:@{ NSDetailedErrorsKey : errors }];
 }
 
-- (NSArray *) underlyingErrors
+- (NSArray *)underlyingErrors
 {
     if (self.code==NSValidationMultipleErrorsError)
         return (self.userInfo)[NSDetailedErrorsKey];

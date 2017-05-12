@@ -33,25 +33,25 @@
 // sent after the store is done loading.
 // reimplement to perform specific initialization.
 // default implementation does nothing.
-- (void) storeDidLoad;
+- (void)storeDidLoad;
 
 // The main context, to be used on the main thread.
-- (NSManagedObjectContext *) mainContext;
+- (NSManagedObjectContext *)mainContext;
 
-- (NSManagedObjectContext *) newTemporaryContext;
+- (NSManagedObjectContext *)newTemporaryContext;
 
-- (NSManagedObjectContext *) currentContext; // mainContext if main thread, stored in Thread's infoDictionary otherwise
+- (NSManagedObjectContext *)currentContext; // mainContext if main thread, stored in Thread's infoDictionary otherwise
 
 // Perform a batch of updates in the internal context, save it, merge the changes in the UI context, and notify when done.
 // Uses the "ValidateDeleteAndSave" mechanism to save. If an object is invalid, it's deleted and saving is retried.
 //
 // The "updates" block may optionally return a debug dictionary, with keys the managedObjects and values debug information that will be logged
 // if the object fails validation and is deleted
-- (void) performUpdates:(void(^)(NSManagedObjectContext* updateContext))updates
+- (void)performUpdates:(void(^)(NSManagedObjectContext* updateContext))updates
          saveCompletion:(void(^)(NSNotification* contextDidSaveNotification))completion;
 
 // Delete the store, the psc, and the moc. The receiver is effectively rendered useless.
-- (void) erase;
+- (void)erase;
 
 @end
 

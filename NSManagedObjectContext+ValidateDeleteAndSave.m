@@ -29,7 +29,7 @@ NSString * const kValidateDeleteAndSaveManagedObjectContextErrorDomain = @"Valid
     BOOL didSave;
     BOOL didDeleteAFaultyObject;
     NSError * lSaveError;
-    NSMutableArray * lDeletedObjectsErrors = [NSMutableArray new];
+    NSMutableArray * lDeletedObjectsErrors = NSMutableArray.new;
     do {
         didSave = [self save:&lSaveError];
         didDeleteAFaultyObject = NO;

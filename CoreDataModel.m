@@ -39,7 +39,7 @@
 
 - (id)init
 {
-    NSString * className = NSStringFromClass([self class]);
+    NSString * className = NSStringFromClass(self.class);
     NSString * directory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
     NSString * storePath = [directory stringByAppendingPathComponent:[className stringByAppendingPathExtension:@"coredata"]];
     return [self initWithModelName:className storePath:storePath];
@@ -75,18 +75,18 @@ static BOOL DebugForceInMemoryStores;
     return nil!=_mainContext;
 }
 
-- (void) storeDidLoad {}
+- (void)storeDidLoad {}
 
-- (void) loadStoreIfNeeded
+- (void)loadStoreIfNeeded
 {
-    NSAssert([NSThread currentThread] == [NSThread mainThread], nil);
+    NSAssert(NSThread.currentThread == NSThread.mainThread, nil);
     
     if(nil==_mainContext)
     {
         // Create mom. Look for mom and momd variants.
-        NSURL * momURL = [[NSBundle bundleForClass:[self class]] URLForResource:_modelName withExtension:@"mom"];
+        NSURL * momURL = [[NSBundle bundleForClass:self.class] URLForResource:_modelName withExtension:@"mom"];
         if(momURL==nil)
-            momURL = [[NSBundle bundleForClass:[self class]] URLForResource:_modelName withExtension:@"momd"];
+            momURL = [[NSBundle bundleForClass:self.class] URLForResource:_modelName withExtension:@"momd"];
 		_mom = [[NSManagedObjectModel alloc] initWithContentsOfURL:momURL];
         
         // Create psc
@@ -103,7 +103,7 @@ static BOOL DebugForceInMemoryStores;
                 {
                     // This happens a lot during development. Just dump the old store and create a new one.
                     NSLog(@"Incompatible data store. Trying to remove the existing db");
-                    [[NSFileManager defaultManager] removeItemAtPath:self.storePath error:NULL];
+                    [NSFileManager.defaultManager removeItemAtPath:self.storePath error:NULL];
                     error = nil;
                                         
                     // Retry
@@ -132,7 +132,7 @@ static BOOL DebugForceInMemoryStores;
         }
         
         // Create update queue
-        _backgroundQueue = [NSOperationQueue new];
+        _backgroundQueue = NSOperationQueue.new;
         _backgroundQueue.maxConcurrentOperationCount = 1;
         
         // Create main moc
@@ -145,7 +145,7 @@ static BOOL DebugForceInMemoryStores;
     }
 }
 
-- (NSManagedObjectContext *) mainContext
+- (NSManagedObjectContext *)mainContext
 {
     [self loadStoreIfNeeded];
     return _mainContext;
@@ -154,11 +154,11 @@ static BOOL DebugForceInMemoryStores;
 /******************************************************************************/
 #pragma mark -
 
-- (void) erase
+- (void)erase
 {
     [self loadStoreIfNeeded];
     NSURL * storeURL = [[[_psc persistentStores] lastObject] URL];
-    [[NSFileManager defaultManager] removeItemAtURL:storeURL error:NULL];
+    [NSFileManager.defaultManager removeItemAtURL:storeURL error:NULL];
     _mainContext = nil;
     [_backgroundQueue cancelAllOperations];
     _backgroundQueue = nil;
@@ -169,7 +169,7 @@ static BOOL DebugForceInMemoryStores;
 /******************************************************************************/
 #pragma mark -
 
-- (NSManagedObjectContext *) newTemporaryContext
+- (NSManagedObjectContext *)newTemporaryContext
 {
     NSManagedObjectContext * context = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSConfinementConcurrencyType];
     context.persistentStoreCoordinator = _psc;
@@ -177,9 +177,9 @@ static BOOL DebugForceInMemoryStores;
     return context;
 }
 
-- (NSManagedObjectContext *) currentContext
+- (NSManagedObjectContext *)currentContext
 {
-    if([[NSThread currentThread] isEqual:[NSThread mainThread]]) {
+    if([NSThread.currentThread isEqual:NSThread.mainThread]) {
         return self.mainContext;
     } else {
         if(![self isStoreLoaded]) {
@@ -189,16 +189,16 @@ static BOOL DebugForceInMemoryStores;
         }
         
         NSString * tlsKey = self.storePath;
-        NSManagedObjectContext * context = [[NSThread currentThread] threadDictionary][tlsKey];
+        NSManagedObjectContext * context = [NSThread.currentThread threadDictionary][tlsKey];
         if(context==nil) {
             context = [self newTemporaryContext];
-            [[NSThread currentThread] threadDictionary][tlsKey] = context;
+            [NSThread.currentThread threadDictionary][tlsKey] = context;
         }
         return context;
     }
 }
 
-- (void) performUpdates:(void(^)(NSManagedObjectContext* updateContext))updates
+- (void)performUpdates:(void(^)(NSManagedObjectContext* updateContext))updates
          saveCompletion:(void(^)(NSNotification* contextDidSaveNotification))completion
 {
     [self loadStoreIfNeeded];
@@ -211,12 +211,12 @@ static BOOL DebugForceInMemoryStores;
 
          // Observe save notification to forward to the completion block in the main queue.
          __block id observation =
-         [[NSNotificationCenter defaultCenter] addObserverForName:NSManagedObjectContextDidSaveNotification
+         [NSNotificationCenter.defaultCenter addObserverForName:NSManagedObjectContextDidSaveNotification
                                                            object:updateContext
                                                             queue:[NSOperationQueue mainQueue]
                                                        usingBlock:^(NSNotification *note)
           {
-              [[NSNotificationCenter defaultCenter] removeObserver:observation];
+              [NSNotificationCenter.defaultCenter removeObserver:observation];
 
               // Check we're not cancelled
               if(updateOperation.isCancelled) return ;
@@ -255,7 +255,7 @@ static BOOL DebugForceInMemoryStores;
 @implementation NSManagedObjectContext (AssociatedManager)
 static char kCoreDataModel_associatedManagerKey;
 
-- (void) setCoreDataModel:(CoreDataModel*)coreDataModel
+- (void)setCoreDataModel:(CoreDataModel*)coreDataModel
 {
     objc_setAssociatedObject(self, &kCoreDataModel_associatedManagerKey, coreDataModel, OBJC_ASSOCIATION_RETAIN);
 }
